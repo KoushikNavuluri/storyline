@@ -237,6 +237,7 @@ export class SyncEngine {
   schedule(state: StudioState, delay = 800) {
     this.latest = state;
     writeCache(this.userId, state, true);
+    this.onStatus(typeof navigator !== "undefined" && !navigator.onLine ? SAVE_OFFLINE : SAVE_SAVING);
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => void this.flush(), delay);
   }
