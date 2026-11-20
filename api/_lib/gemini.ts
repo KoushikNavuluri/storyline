@@ -22,6 +22,9 @@ export class GeminiError extends Error {
 
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 
+/** Model from AI_MODEL (or GEMINI_MODEL); defaults to gemini-3.1-flash-lite. */
+export const modelName = () => process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+
 export async function generateJson<T>({
   system,
   parts,
@@ -39,7 +42,7 @@ export async function generateJson<T>({
 }): Promise<GeminiResult<T>> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new GeminiError("Writing assistance is not configured.", 503);
-  const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
+  const model = modelName();
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

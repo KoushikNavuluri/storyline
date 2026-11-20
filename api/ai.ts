@@ -5,7 +5,7 @@
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { logUsage, overQuota, userFromToken } from "./_lib/auth.js";
-import { generateJson, GeminiError } from "./_lib/gemini.js";
+import { generateJson, GeminiError, modelName } from "./_lib/gemini.js";
 import { SYSTEM_BASE, TASKS, TaskError } from "./_lib/tasks.js";
 
 export const config = { maxDuration: 60 };
@@ -67,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error) {
     const status = error instanceof GeminiError || error instanceof TaskError ? error.status : 500;
     if (!(error instanceof TaskError)) console.error(`AI task ${taskName} failed`, error);
-    await logUsage({ userId: user.id, task: taskName, model: process.env.GEMINI_MODEL || "gemini-flash-latest", tokensIn: 0, tokensOut: 0, ok: false });
+    await logUsage({ userId: user.id, task: taskName, model: modelName(), tokensIn: 0, tokensOut: 0, ok: false });
     return res.status(status).json({ error: error instanceof Error ? error.message : "Assistance failed." });
   }
 }
