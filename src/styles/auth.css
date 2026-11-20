@@ -1,0 +1,37 @@
+/* Sign-in additions. Everything else comes from the prototype stylesheet (app.css). */
+.auth-panel {
+  display: grid;
+  gap: 18px;
+  max-width: 440px;
+  margin: 6px 0 26px;
+}
+.auth-panel .choices {
+  justify-content: flex-start;
+}
+.auth-panel .text-link {
+  justify-content: flex-start;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  width: fit-content;
+}
+.auth-error {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: hsl(0 72% 42%);
+}
+.dark .auth-error {
+  color: hsl(0 85% 72%);
+}
+.app-loading {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  align-content: center;
+  font-size: 14px;
+}
