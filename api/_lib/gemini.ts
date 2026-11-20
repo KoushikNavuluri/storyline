@@ -1,4 +1,7 @@
-/** Minimal Google Gemini client (REST generateContent with structured JSON output). */
+/**
+ * Minimal Google Gemini client (REST generateContent with structured JSON output).
+ * AI_PROVIDER selects the endpoint: "vertex" (Vertex AI, API-key express mode; default) or "gemini" (AI Studio).
+ */
 
 export interface GeminiPart {
   text?: string;
@@ -20,7 +23,13 @@ export class GeminiError extends Error {
   }
 }
 
-const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
+const ENDPOINTS = {
+  vertex: "https://aiplatform.googleapis.com/v1/publishers/google/models",
+  gemini: "https://generativelanguage.googleapis.com/v1beta/models",
+} as const;
+
+export const providerName = (): keyof typeof ENDPOINTS =>
+  (process.env.AI_PROVIDER || "vertex").toLowerCase() === "gemini" ? "gemini" : "vertex";
 
 /** Model from AI_MODEL (or GEMINI_MODEL); defaults to gemini-3.1-flash-lite. */
 export const modelName = () => process.env.AI_MODEL || process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
@@ -48,7 +57,7 @@ export async function generateJson<T>({
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
-    response = await fetch(`${ENDPOINT}/${encodeURIComponent(model)}:generateContent`, {
+    response = await fetch(`${ENDPOINTS[providerName()]}/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       signal: controller.signal,

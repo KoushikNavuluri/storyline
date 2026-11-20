@@ -18,6 +18,7 @@ export const SYSTEM_BASE = [
   "Hard rules:",
   "- Use only facts that appear in the material the user provides (profile, resume text, job description, notes).",
   "- Never invent employers, titles, dates, numbers, metrics, percentages, tools, skills, credentials, or outcomes.",
+  "- Never claim a result, impact, or benefit (for example: improved, increased, streamlined, reduced, boosted) unless the user's material states it.",
   "- When something useful is missing, do not fill the gap; leave it out.",
   "- Write in plain, warm, confident English. No clichés, buzzwords, emoji, or exaggeration.",
   "- Use straight ASCII quotes and hyphens.",
@@ -233,23 +234,24 @@ export const TASKS: Record<string, TaskDef> = {
   },
 
   coverLetter: {
-    schema: S.obj({ letter: S.str }),
+    schema: S.obj({ paragraphs: S.arr(S.str) }),
     temperature: 0.6,
     build: (p) =>
       text(
         `Write the body of a cover letter for the ${clean(p.role, 120)} role at ${clean(p.company, 120)}.`,
-        "Three or four short paragraphs, 170 to 300 words in total, separated by a blank line. Write in the first person.",
+        "Return `paragraphs`: three or four short paragraphs (170 to 300 words in total), one string per paragraph. Write in the first person.",
         "Do not include a greeting, date, address, or sign-off; Storyline adds those.",
         `Closing tone: ${p.tone === "Warm" ? "warm and appreciative" : "direct and confident"}.`,
         "Open with the role and a genuine reason for interest. If a motivation is given, use it in the person's own spirit; if not, keep the reason grounded in the job description without inventing personal feelings.",
-        "Build the middle from the highlighted experience (and the rest of the profile), connecting it to what the job asks for. Do not invent achievements or numbers.",
+        "Build the middle from the highlighted experience (and the rest of the profile), connecting it to what the job asks for. Describe what the person did exactly as their profile states it; do not add achievements, results, or numbers.",
         material("motivation", str(p.why, 2000)),
         material("highlighted_experience", p.experience || null),
         material("job_description", str(p.jd, 6000)),
         material("profile", p.profile),
       ),
     validate: (data, p) => {
-      let letter = clean(data.letter, 4000)
+      const raw = Array.isArray(data.paragraphs) ? (data.paragraphs as unknown[]).map((x) => str(x, 2000)).join("\n\n") : str(data.letter, 4000);
+      let letter = clean(raw, 4000)
         .split(/\n{2,}/)
         .map((para) => para.replace(/\n/g, " ").trim())
         .filter((para) => para && !/^(dear|to the hiring|hello|hi)\b/i.test(para) && !/^(sincerely|best regards|kind regards|regards|thank you,?)$/i.test(para))
@@ -264,21 +266,25 @@ export const TASKS: Record<string, TaskDef> = {
   },
 
   followup: {
-    schema: S.obj({ message: S.str }),
+    schema: S.obj({ greeting: S.str, paragraphs: S.arr(S.str) }),
     temperature: 0.5,
     build: (p) =>
       text(
-        "Write a short, thoughtful follow-up email (70 to 140 words) for this job application.",
-        "Start with \"Hello\" (add the contact's name only if it is given) and end with \"Thank you,\" and the person's name on its own line.",
+        "Write a short, thoughtful follow-up email (60 to 130 words) for this job application.",
+        "Return `greeting` (\"Hello,\" or \"Hello <contact name>,\" only if a contact name is given) and `paragraphs` (one or two short paragraphs, one string each). Do not include a sign-off or the sender's name; Storyline adds them.",
         "Match the stage: saved means asking about next steps or applying; applied means checking on the application; interviewing means thanking them after or before the conversation; offer means a gracious reply; closed means a kind, professional note.",
         "Use only the details given. Do not invent dates, names, or conversations.",
         material("application", p.application),
         material("name", str(p.name, 120)),
       ),
-    validate: (data) => {
-      const message = clean(data.message, 2000);
-      if (!message) throw new TaskError("No message was written.", 422);
-      return { message };
+    validate: (data, p) => {
+      const greeting = clean(data.greeting, 120) || "Hello,";
+      const body = (Array.isArray(data.paragraphs) ? (data.paragraphs as unknown[]) : [data.message])
+        .map((x) => clean(x, 900).replace(/\n/g, " "))
+        .filter((x) => x && !/^(thank you|thanks|best|regards|sincerely)\b[^.]*,?$/i.test(x));
+      if (!body.length) throw new TaskError("No message was written.", 422);
+      const name = clean(p.name, 120);
+      return { message: [greeting, ...body, `Thank you,${name ? "\n" + name : ""}`].join("\n\n") };
     },
   },
 
@@ -360,7 +366,7 @@ export const TASKS: Record<string, TaskDef> = {
       if (!blocks.some((b) => b.trim())) throw new TaskError("Add your own words to at least one block.");
       return text(
         `Shape a spoken first-person introduction of about ${words} words (${seconds} seconds at a calm pace).`,
-        "Use only the three blocks below: what they do, a contribution they can speak to, and what they are looking for next. Keep their voice. Join and smooth the wording; do not add facts, numbers, or claims.",
+        "Use only the three blocks below: what they do, a contribution they can speak to, and what they are looking for next. Keep their voice. Join and smooth the wording; do not add facts, numbers, results, or claims about impact that the blocks do not state.",
         "Return plain text in two or three short paragraphs separated by a blank line. No headings or bullet points.",
         material("name_and_headline", `${str(p.name, 120)} - ${str(p.headline, 200)}`),
         material("what_i_do", blocks[0]),

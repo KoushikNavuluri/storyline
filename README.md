@@ -10,7 +10,7 @@ Writing assistance runs on Google Gemini and works only from your own material. 
 |---|---|
 | Front end | React 18, TypeScript, Vite, Radix UI primitives, cmdk, sonner, framer-motion, lucide icons |
 | Auth and data | Supabase (email + password, magic link, password reset; Postgres with row-level security) |
-| AI | Google Gemini (`gemini-3.1-flash-lite` by default) via a server-side Vercel function, structured JSON output |
+| AI | Google Gemini (`gemini-3.1-flash-lite` by default) via a server-side Vercel function (Vertex AI or AI Studio endpoint), structured JSON output |
 | Hosting | Vercel (static app + `api/ai` serverless function) |
 
 ## Project layout
@@ -77,6 +77,6 @@ Set these environment variables in the Vercel project, then deploy:
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | build (public) |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | server only |
 | `GEMINI_API_KEY` | server only |
-| `AI_MODEL` (default `gemini-3.1-flash-lite`; `GEMINI_MODEL` also accepted), `AI_DAILY_LIMIT`, `AI_MINUTE_LIMIT` | optional |
+| `AI_PROVIDER` (`vertex` default, or `gemini` for an AI Studio key), `AI_MODEL` (default `gemini-3.1-flash-lite`; `GEMINI_MODEL` also accepted), `AI_DAILY_LIMIT`, `AI_MINUTE_LIMIT` | optional |
 
 In Supabase Auth settings, set the Site URL to the Vercel domain and add it to the redirect URLs so confirmation, magic-link, and reset emails return to the app. For production email volume, configure custom SMTP in Supabase.
